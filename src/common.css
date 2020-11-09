@@ -15,6 +15,7 @@
 
 html {
   scroll-behavior: smooth;
+  word-break: break-all;
 }
 
 body {
@@ -37,8 +38,7 @@ ul {
 }
 
 textarea {
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif,
-    "Microsoft Yahei";
+  font-family: "Microsoft Yahei";
 }
 
 blockquote,
@@ -105,7 +105,7 @@ ul {
 /* dropdown 弹窗样式 */
 .dropdown-overlay {
   display: inline-block;
-  padding:8px;
+  padding: 8px;
   text-align: center;
   color: #000;
   border-radius: 5px;
