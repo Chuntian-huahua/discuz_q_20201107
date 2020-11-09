@@ -60,7 +60,7 @@ export default {
 }
 .big-play-button {
   position: absolute;
-  z-index: 999;
+  z-index: 1;
   top: 0;
   bottom: 0;
   left: 0;
