@@ -6,6 +6,13 @@
   "description": "DiscuzQ视频站模板",
   "glyphs": [
     {
+      "icon_id": "212328",
+      "name": "play_fill",
+      "font_class": "playfill",
+      "unicode": "e74f",
+      "unicode_decimal": 59215
+    },
+    {
       "icon_id": "30452",
       "name": "more",
       "font_class": "more",
