@@ -20,13 +20,26 @@
         </router-link>
       </a-carousel>
       <div class="recommend-video">
-        <mask-video-item v-for="index in 6" ></mask-video-item>
+        <mask-video-item
+          v-for="threadItem in recommendThreads"
+          :data="threadItem"
+          :key="threadItem._source.id"
+        ></mask-video-item>
       </div>
     </div>
-    <Panel class="video-panel" v-for="index in 10" :key="index">
-      <router-link class="channel-name" to="/channel/yingshi" slot="title">影视</router-link>
-      <router-link class="channel-more" slot="header-right" to="/channel/yingshi">
-        More
+    <Panel
+      :ref="`channel_${channelIndex}`"
+      class="video-panel"
+      v-for="(channel,channelIndex) in channels"
+      :key="channel._source.id"
+    >
+      <router-link
+        class="channel-name"
+        :to="`/channel/${channel._source.id}`"
+        slot="title"
+      >{{ channel.name }}</router-link>
+      <router-link class="channel-more" slot="header-right" :to="`/channel/${channel._source.id}`">
+        更多
         <c-icon value="icon-right" size="14px"></c-icon>
       </router-link>
       <ul class="video-list">
@@ -43,8 +56,55 @@ import Panel from "@/components/Panel";
 import MaskVideoItem from "@/components/MaskVideoItem";
 import VideoItem from "@/components/VideoItem";
 import { Carousel } from "ant-design-vue";
+import CTools from "../function/c_tools";
 export default {
   name: "Home",
+  data() {
+    return {
+      recommendThreads: [],
+      channels: [],
+    };
+  },
+  created() {
+    this.getRecommendVideoThread();
+    let channels = JSON.parse(JSON.stringify(this.$state.categories));
+    for (let index in channels) {
+      channels[index]["__loaded"] = false;
+    }
+    this.channels = channels;
+  },
+  mounted() {
+    let refs = this.$refs;
+    let categoriesDom = [];
+    for (let name in refs) {
+      if (/channel_\d+/.test(name)) {
+        let el = refs[name][0]["$el"];
+        CTools.onScroll(
+          (windowScrollTop) => {
+            console.log(windowScrollTop);
+          },
+          el.offsetTop - window.innerHeight,
+          null,
+          true
+        );
+      }
+    }
+  },
+  methods: {
+    getRecommendVideoThread() {
+      this.$dzq.request
+        .get("/threads", {
+          include: "threadVideo,user",
+          "filter[isDeleted]": "no",
+          "filter[type]": 2,
+          "page[limit]": 6,
+        })
+        .then((res) => {
+          let threads = this.$dzq.serializer(res)["data"];
+          this.recommendThreads = threads;
+        });
+    },
+  },
   components: {
     Panel,
     MaskVideoItem,

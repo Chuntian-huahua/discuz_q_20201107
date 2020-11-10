@@ -23,7 +23,7 @@ const routes = [
           import(/* webpackChunkName: "video" */ "../views/Video/Video.vue"),
       },
       {
-        path: "/channel/:channel_name",
+        path: "/channel/:channel_id",
         name: "VideoChannel",
         component: () =>
           import(/* webpackChunkName: "video" */ "../views/Video/Channel.vue"),
@@ -41,7 +41,12 @@ const routes = [
         name: "AuthorIndex",
         component: () =>
           import(/* webpackChunkName: "Author" */ "../views/Author/Index.vue"),
-      },
+      },{
+        path: "/author/upload",
+        name: "AuthorUpload",
+        component: () =>
+          import(/* webpackChunkName: "Author" */ "../views/Author/Upload.vue"),
+      }
     ],
   },
 ];

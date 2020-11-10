@@ -21,7 +21,7 @@
       <template v-slot:right>
         <ul class="header-link">
           <li class="header-link-item">
-            <router-link to="/author">
+            <router-link to="/author/upload">
               <c-icon value="icon-upload" :size="24"></c-icon>upload
             </router-link>
           </li>
@@ -48,24 +48,30 @@
     <a-affix v-show="isHomePage">
       <div class="channel-bar">
         <ul class="channel-bar-list">
+          <li class="channel-bar-item">
+            <router-link :class="{active:currentChannelId==0}" to="/">推荐</router-link>
+          </li>
           <li
             class="channel-bar-item"
             v-for="(channel,channelIndex) in channels"
             :key="channelIndex"
           >
-            <router-link :class="{active:channelIndex==1}" to="/channel/yingshi">{{ channel.text }}</router-link>
+            <router-link
+              :class="{active:currentChannelId==channel._source.id}"
+              :to="`/channel/${channel._source.id}`"
+            >{{ channel.name }}</router-link>
           </li>
           <li class="channel-bar-item show-more-channel" v-if="channelMore.length>0">
             更多
             <ul class="channel-more">
               <li
                 class="channel-item"
-                v-for="(moreChannelItem,moreChannelItemIndex) in channelMore"
+                v-for="(moreChannelItem) in channelMore"
                 :key="moreChannelItem['name']"
               >
                 <router-link
-                  :class="{active:moreChannelItemIndex==1}"
-                  to="/channel/yingshi"
+                  :class="{active:currentChannelId==moreChannelItem._source.id}"
+                  :to="`/channel/${currentChannelId._source.id}`"
                 >{{ moreChannelItem.text }}</router-link>
               </li>
             </ul>
@@ -132,129 +138,32 @@ export default {
   data() {
     return {
       isHomePage: true,
-      channels: [
-        {
-          id: "recommend",
-          text: "推荐",
-        },
-        {
-          id: "yingshi",
-          text: "影视",
-        },
-        {
-          id: "yinyue",
-          text: "音乐",
-        },
-        {
-          id: "vlog",
-          text: "VLog",
-        },
-        {
-          id: "youxi",
-          text: "游戏",
-        },
-        {
-          id: "gaoxiao",
-          text: "搞笑",
-        },
-        {
-          id: "zongyi",
-          text: "综艺",
-        },
-        {
-          id: "yule",
-          text: "娱乐",
-        },
-        {
-          id: "dongman",
-          text: "动漫",
-        },
-        {
-          id: "shenghuo",
-          text: "生活",
-        },
-        {
-          id: "guangchangwu",
-          text: "广场舞",
-        },
-        {
-          id: "meishi",
-          text: "美食",
-        },
-        {
-          id: "chongwu",
-          text: "宠物",
-        },
-        {
-          id: "sannong",
-          text: "三农",
-        },
-        {
-          id: "junshi",
-          text: "军事",
-        },
-        {
-          id: "shehui",
-          text: "社会",
-        },
-        {
-          id: "tiyu",
-          text: "体育",
-        },
-        {
-          id: "keji",
-          text: "科技",
-        },
-        {
-          id: "shishang",
-          text: "时尚",
-        },
-        {
-          id: "qiche",
-          text: "汽车",
-        },
-        {
-          id: "qinzi",
-          text: "亲子",
-        },
-        {
-          id: "jiaoyu",
-          text: "教育",
-        },
-        {
-          id: "wenhua",
-          text: "文化",
-        },
-        {
-          id: "lvyou",
-          text: "旅游",
-        },
-        {
-          id: "miaodong",
-          text: "秒懂",
-        },
-      ],
+      channels: this.$state.categories,
       channelMore: [],
       channelBlocks: [],
       isShowChannelBlocks: false,
+      currentChannelId: 0,
       userLinks: [
         {
           icon: "icon-round",
           text: "个人中心",
           link: "/",
-        },{
+        },
+        {
           icon: "icon-apps",
           text: "创作中心",
           link: "/author",
-        },{
+        },
+        {
           icon: "icon-mail",
           text: "消息中心",
           link: "/",
-        },{
+        },
+        {
           icon: "icon-exit",
           text: "退出登录",
           link: "/",
-        }
+        },
       ],
     };
   },
@@ -297,6 +206,15 @@ export default {
   },
   watch: {
     "$route.fullPath"() {
+      if (this.$route.params.channel_id) {
+        if (this.currentChannelId != this.$route.params.channel_id) {
+          this.currentChannelId = this.$route.params.channel_id;
+        }
+      } else {
+        if (this.currentChannelId != 0) {
+          this.currentChannelId = 0;
+        }
+      }
       if (this.$route.fullPath === "/" || this.$route.name === "VideoChannel") {
         if (this.isHomePage === false) {
           this.isHomePage = true;
