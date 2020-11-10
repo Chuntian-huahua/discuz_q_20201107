@@ -32,6 +32,7 @@
       class="video-panel"
       v-for="(channel,channelIndex) in channels"
       :key="channel._source.id"
+      :data-index="channelIndex"
     >
       <router-link
         class="channel-name"
@@ -42,11 +43,25 @@
         更多
         <c-icon value="icon-right" size="14px"></c-icon>
       </router-link>
-      <ul class="video-list">
-        <li v-for="iindex in 5" :key="iindex">
-          <video-item></video-item>
+      <ul class="video-list" v-show="channel.__loaded">
+        <li v-for="thread in channel.threads" :key="thread._source.id">
+          <video-item :data="thread"></video-item>
         </li>
       </ul>
+      <ul class="video-list" v-show="channel.__loaded===false">
+        <a-skeleton
+          avatar
+          :paragraph="{ rows: 4 }"
+          v-for="index in 5"
+          :key="index"
+          :active="channel.__loading"
+        />
+      </ul>
+      <a-empty class="channel-video-empty" v-show="channel.__loaded&&channel.threads.length===0">
+        <span slot="description">
+          该频道下还没有视频哦
+        </span>
+      </a-empty>
     </Panel>
   </div>
 </template>
@@ -55,7 +70,7 @@
 import Panel from "@/components/Panel";
 import MaskVideoItem from "@/components/MaskVideoItem";
 import VideoItem from "@/components/VideoItem";
-import { Carousel } from "ant-design-vue";
+import { Carousel, Skeleton,Empty } from "ant-design-vue";
 import CTools from "../function/c_tools";
 export default {
   name: "Home",
@@ -70,6 +85,8 @@ export default {
     let channels = JSON.parse(JSON.stringify(this.$state.categories));
     for (let index in channels) {
       channels[index]["__loaded"] = false;
+      channels[index]["__loading"] = false;
+      channels[index]["threads"] = [];
     }
     this.channels = channels;
   },
@@ -80,8 +97,14 @@ export default {
       if (/channel_\d+/.test(name)) {
         let el = refs[name][0]["$el"];
         CTools.onScroll(
-          (windowScrollTop) => {
-            console.log(windowScrollTop);
+          () => {
+            let index = Number(el.dataset.index);
+            if (this.channels[index]["__loaded"] === false) {
+              this.getCategoryVideoThread(
+                this.channels[index]["_source"]["id"],
+                index
+              );
+            }
           },
           el.offsetTop - window.innerHeight,
           null,
@@ -104,12 +127,31 @@ export default {
           this.recommendThreads = threads;
         });
     },
+    getCategoryVideoThread(categoryId, index) {
+      this.channels[index]["__loading"] = true;
+      this.$dzq.request
+        .get("/threads", {
+          include: "threadVideo",
+          "filter[isDeleted]": "no",
+          "filter[type]": 2,
+          "page[limit]": 5,
+          "filter[categoryId]": categoryId,
+        })
+        .then((res) => {
+          let threads = this.$dzq.serializer(res)["data"];
+          this.channels[index]["threads"] = threads;
+          this.channels[index]["__loaded"] = true;
+          this.channels[index]["__loading"] = false;
+        });
+    },
   },
   components: {
     Panel,
     MaskVideoItem,
     VideoItem,
     ACarousel: Carousel,
+    ASkeleton: Skeleton,
+    AEmpty:Empty
   },
 };
 </script>
