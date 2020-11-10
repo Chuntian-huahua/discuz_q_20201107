@@ -1,9 +1,13 @@
 :root {
-  --primary-color: #ff4141;
-  --main-width: 1200px;
-  --text-color-secondary: rgba(0, 0, 0, 0.45);
-  --box-shadow-base: 0 2px 8px rgba(0, 0, 0, 0.15);
-  --border-radius-base: 4px;
+  --primary-color: #ff4141; /* 全局颜色 */
+  --main-width: 1200px; /* 全局容器宽度 */
+  --text-color-secondary: rgba(0, 0, 0, 0.45); /* 次文本色 */
+  --box-shadow-base: 0 2px 8px rgba(0, 0, 0, 0.15); /* 浮层阴影 */
+  --border-radius-base: 4px; /* 组件/浮层圆角 */
+  --success-color: #52c41a; /*成功色*/
+  --warning-color: #faad14; /* 警告色 */
+  --error-color: #f5222d; /* 错误色 */
+  --link-color: #1890ff; /* 链接色 */
 }
 
 *,
@@ -73,12 +77,26 @@ ul {
   overflow: hidden;
   white-space: nowrap;
 }
-
 .ellipsis2 {
   display: -webkit-box;
   text-overflow: ellipsis;
   overflow: hidden;
   -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.ellipsis3 {
+  display: -webkit-box;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+.ellipsis4 {
+  display: -webkit-box;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  -webkit-line-clamp: 4;
   -webkit-box-orient: vertical;
 }
 
