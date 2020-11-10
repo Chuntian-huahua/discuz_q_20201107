@@ -6,6 +6,76 @@
   "description": "DiscuzQ视频站模板",
   "glyphs": [
     {
+      "icon_id": "29949",
+      "name": "time_fill",
+      "font_class": "timefill",
+      "unicode": "e65e",
+      "unicode_decimal": 58974
+    },
+    {
+      "icon_id": "29953",
+      "name": "warn_fill",
+      "font_class": "warnfill",
+      "unicode": "e662",
+      "unicode_decimal": 58978
+    },
+    {
+      "icon_id": "29941",
+      "name": "round_check_fill",
+      "font_class": "roundcheckfill",
+      "unicode": "e656",
+      "unicode_decimal": 58966
+    },
+    {
+      "icon_id": "29943",
+      "name": "round_close_fill",
+      "font_class": "roundclosefill",
+      "unicode": "e658",
+      "unicode_decimal": 58968
+    },
+    {
+      "icon_id": "31416",
+      "name": "pic",
+      "font_class": "pic",
+      "unicode": "e69b",
+      "unicode_decimal": 59035
+    },
+    {
+      "icon_id": "12702845",
+      "name": "上传视频",
+      "font_class": "shangchuanshipin",
+      "unicode": "e73a",
+      "unicode_decimal": 59194
+    },
+    {
+      "icon_id": "2553821",
+      "name": "视频",
+      "font_class": "shipin",
+      "unicode": "e622",
+      "unicode_decimal": 58914
+    },
+    {
+      "icon_id": "11709031",
+      "name": "视频文件",
+      "font_class": "shipinwenjian",
+      "unicode": "e60b",
+      "unicode_decimal": 58891
+    },
+    {
+      "icon_id": "17328319",
+      "name": "首页-超分辨率",
+      "font_class": "shouye-chaofenbianshuai",
+      "unicode": "e615",
+      "unicode_decimal": 58901
+    },
+    {
+      "icon_id": "11362235",
+      "name": "暂停",
+      "font_class": "zanting",
+      "unicode": "e666",
+      "unicode_decimal": 58982
+    },
+    {
       "icon_id": "212328",
       "name": "play_fill",
       "font_class": "playfill",
