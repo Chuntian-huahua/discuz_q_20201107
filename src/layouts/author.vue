@@ -107,8 +107,8 @@ export default {
 }
 .page-aside {
   position: relative;
-  min-height: calc(100vh - 72px);
-  border: 1px solid rgba(0, 0, 0, 0.09);
+  min-height: calc(100vh - 72px + 40px);
+  border-right: 1px solid rgba(0, 0, 0, 0.09);
   background: white;
 }
 .page-aside-main {
@@ -118,7 +118,7 @@ export default {
   justify-content: center;
   position: fixed;
   left: 0;
-  width: 230px;
+  width: 224px;
 }
 .user-avatar {
   margin-top: 37px;
@@ -177,7 +177,7 @@ export default {
 }
 
 .page-content {
-  margin: 20px 20px 0 20px;
+  margin: 20px;
   min-height: 100px;
   background: white;
   border-radius: 8px;
