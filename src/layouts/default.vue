@@ -45,6 +45,19 @@
         </ul>
       </template>
     </page-header>
+    <div class="header-channels" v-show="isShowChannelBlocks" @click.stop="channelBlockClick">
+      <div class="header-channels-list">
+        <ul
+          class="header-channel-block"
+          v-for="(channelBlock,channelBlockIndex) in channelBlocks"
+          :key="channelBlockIndex"
+        >
+          <li class="header-channel-item" v-for="channel in channelBlock" :key="channel._source.id">
+            <router-link :to="`/channel/${channel._source.id}`">{{ channel.name }}</router-link>
+          </li>
+        </ul>
+      </div>
+    </div>
     <a-affix v-show="isHomePage">
       <div class="channel-bar">
         <ul class="channel-bar-list">
@@ -177,6 +190,7 @@ export default {
       }
     }
     let channels = this.channels;
+    console.log(channels);
     let blockCount = Math.ceil(channels.length / 6);
     let channelBlocks = [];
     for (let i = 0; i < blockCount; i++) {
