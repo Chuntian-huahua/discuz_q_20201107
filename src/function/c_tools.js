@@ -31,9 +31,96 @@ function throttle(func, delay) {
   };
 }
 
+/**
+ * 当距离底部多大距离时触发回调函数
+ * @param {number} distance 底部距离
+ * @param {function} callback 回调函数
+ * @param {number} debounceTime 防抖时间差
+ */
+function onScroll(cb, scrollTop = null, scrollLeft = null, once = false) {
+  let scrollCBLength = Object.keys(onScrollCallBackTrack).length;
+  let cbName = `cb_${scrollCBLength}`;
+  if (once === true) {
+    cbName += "_once";
+  }
+  onScrollCallBackTrack[cbName] = {
+    scrollTop,
+    scrollLeft,
+    cb,
+  };
+  scrollTop = document.documentElement.scrollTop;
+  scrollLeft = document.documentElement.scrollLeft;
+  window.addEventListener(
+    "scroll",
+    throttle(function() {
+      scrollTop = document.documentElement.scrollTop;
+      scrollLeft = document.documentElement.scrollLeft;
+      for (let key in onScrollCallBackTrack) {
+        if (
+          onScrollCallBackTrack[key] &&
+          (onScrollCallBackTrack[key]["scrollLeft"] ||
+            onScrollCallBackTrack[key]["scrollTop"])
+        ) {
+          if (onScrollCallBackTrack[key].hasOwnProperty("scrollTop")) {
+            if (
+              onScrollCallBackTrack[key]["scrollTop"] &&
+              scrollTop >= onScrollCallBackTrack[key]["scrollTop"]
+            ) {
+              onScrollCallBackTrack[key]["cb"]();
+              if (/once/.test(key)) {
+                delete onScrollCallBackTrack[key];
+              }
+            }
+          }
+          if (
+            onScrollCallBackTrack[key] &&
+            onScrollCallBackTrack[key].hasOwnProperty("scrollLeft")
+          ) {
+            if (
+              onScrollCallBackTrack[key]["scrollLeft"] &&
+              scrollLeft >= onScrollCallBackTrack[key]["scrollLeft"]
+            ) {
+              onScrollCallBackTrack[key]["cb"]();
+              if (/once/.test(key)) {
+                delete onScrollCallBackTrack[key];
+              }
+            }
+          }
+          if (
+            onScrollCallBackTrack[key] &&
+            onScrollCallBackTrack[key].hasOwnProperty("scrollLeft") &&
+            onScrollCallBackTrack[key].hasOwnProperty("scrollTop")
+          ) {
+            if (
+              onScrollCallBackTrack[key]["scrollLeft"] &&
+              onScrollCallBackTrack[key]["scrollTop"] &&
+              scrollLeft >=
+                onScrollCallBackTrack[key][
+                  "scrollLeft" &&
+                    scrollTop >= onScrollCallBackTrack[key]["scrollTop"]
+                ]
+            ) {
+              onScrollCallBackTrack[key]["cb"]();
+              if (/once/.test(key)) {
+                delete onScrollCallBackTrack[key];
+              }
+            }
+          }
+        } else {
+          onScrollCallBackTrack[key]["cb"]();
+          if (/once/.test(key)) {
+            delete onScrollCallBackTrack[key];
+          }
+        }
+      }
+    }, 100)
+  );
+}
+
 export default {
   debounce,
   throttle,
+  onScroll,
   /**
    * 返回一个对象，对象键为数组元素里面指定键的值
    * @param {array} arr 源数组
@@ -93,95 +180,10 @@ export default {
     let type = Object.prototype.toString.call(value);
     return type.slice(type.lastIndexOf(" ") + 1, type.indexOf("]"));
   },
-  onScroll(cb, scrollTop = null, scrollLeft = null, once = false) {
-    let scrollCBLength = Object.keys(onScrollCallBackTrack).length;
-    let cbName = `cb_${scrollCBLength}`;
-    if (once === true) {
-      cbName += "_once";
-    }
-    onScrollCallBackTrack[cbName] = {
-      scrollTop,
-      scrollLeft,
-      cb,
-    };
-    scrollTop = document.documentElement.scrollTop;
-    scrollLeft = document.documentElement.scrollLeft;
-    window.addEventListener(
-      "scroll",
-      throttle(function() {
-        scrollTop = document.documentElement.scrollTop;
-        scrollLeft = document.documentElement.scrollLeft;
-        for (let key in onScrollCallBackTrack) {
-          if (
-            onScrollCallBackTrack[key] &&
-            (onScrollCallBackTrack[key]["scrollLeft"] ||
-              onScrollCallBackTrack[key]["scrollTop"])
-          ) {
-            if (onScrollCallBackTrack[key].hasOwnProperty("scrollTop")) {
-              if (
-                onScrollCallBackTrack[key]["scrollTop"] &&
-                scrollTop >= onScrollCallBackTrack[key]["scrollTop"]
-              ) {
-                onScrollCallBackTrack[key]["cb"]();
-                if (/once/.test(key)) {
-                  delete onScrollCallBackTrack[key];
-                }
-              }
-            }
-            if (
-              onScrollCallBackTrack[key] &&
-              onScrollCallBackTrack[key].hasOwnProperty("scrollLeft")
-            ) {
-              if (
-                onScrollCallBackTrack[key]["scrollLeft"] &&
-                scrollLeft >= onScrollCallBackTrack[key]["scrollLeft"]
-              ) {
-                onScrollCallBackTrack[key]["cb"]();
-                if (/once/.test(key)) {
-                  delete onScrollCallBackTrack[key];
-                }
-              }
-            }
-            if (
-              onScrollCallBackTrack[key] &&
-              onScrollCallBackTrack[key].hasOwnProperty("scrollLeft") &&
-              onScrollCallBackTrack[key].hasOwnProperty("scrollTop")
-            ) {
-              if (
-                onScrollCallBackTrack[key]["scrollLeft"] &&
-                onScrollCallBackTrack[key]["scrollTop"] &&
-                scrollLeft >=
-                  onScrollCallBackTrack[key][
-                    "scrollLeft" &&
-                      scrollTop >= onScrollCallBackTrack[key]["scrollTop"]
-                  ]
-              ) {
-                onScrollCallBackTrack[key]["cb"]();
-                if (/once/.test(key)) {
-                  delete onScrollCallBackTrack[key];
-                }
-              }
-            }
-          } else {
-            onScrollCallBackTrack[key]["cb"]();
-            if (/once/.test(key)) {
-              delete onScrollCallBackTrack[key];
-            }
-          }
-        }
-      }, 100)
-    );
-  },
-  /**
-   * 当距离底部多大距离时触发回调函数
-   * @param {number} distance 底部距离
-   * @param {function} callback 回调函数
-   * @param {number} debounceTime 防抖时间差
-   */
   distanceBottom(distance = 300, callback = null, debounceTime = 300) {
     let scrollTop = document.documentElement.scrollTop;
     let scrollHeight = document.documentElement.scrollHeight;
-    window.onscroll = this.debounce(function() {
+    onScroll(function() {
       scrollHeight = document.documentElement.scrollHeight;
       scrollTop = document.documentElement.scrollTop;
       if (scrollHeight - (scrollTop + window.innerHeight) <= distance) {
@@ -189,6 +191,6 @@ export default {
           callback();
         }
       }
-    }, debounceTime);
+    });
   },
 };
