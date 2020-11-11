@@ -171,6 +171,11 @@ export default {
     if (this.$route.fullPath === "/") {
       this.isHomePage = true;
     }
+    if (this.$route.params.channel_id) {
+      if (this.currentChannelId != this.$route.params.channel_id) {
+        this.currentChannelId = this.$route.params.channel_id;
+      }
+    }
     let channels = this.channels;
     let blockCount = Math.ceil(channels.length / 6);
     let channelBlocks = [];
