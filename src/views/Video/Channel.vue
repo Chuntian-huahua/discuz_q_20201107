@@ -3,24 +3,41 @@
     <div class="channel-header">
       <Swiper class="header-swiper" :data="swipers" width="471px" height="266px"></Swiper>
       <div class="header-recommend-videos">
-        <mask-video-item v-for="index in 6" :key="index"></mask-video-item>
+        <mask-video-item
+          v-for="threadItem in recommendThreads"
+          :key="threadItem._source.id"
+          :data="threadItem"
+        ></mask-video-item>
       </div>
     </div>
     <!-- 时下热门 -->
     <panel class="video-panel">
-      <span class="panel-title" slot="title">Hot video</span>
-      <div class="video-list">
-        <video-item v-for="index in 5" :key="index" />
+      <span class="panel-title" slot="title">时下热门</span>
+      <div class="video-list" v-show="hotThreads.length>0">
+        <video-item
+          v-for="threadItem in hotThreads"
+          :key="threadItem._source.id"
+          :data="threadItem"
+        />
       </div>
+      <a-empty description="还没有视频捏" v-show="hotThreads.length===0"></a-empty>
     </panel>
     <!-- 当前频道下的所有视频 每页1000条 -->
     <panel class="video-panel">
-      <span class="panel-title" slot="title">More videos</span>
-      <div class="video-list">
-        <video-item v-for="index in videoCount" :key="index" />
+      <span class="panel-title" slot="title">更多精选</span>
+      <div class="video-list" v-show="threads.length>0">
+        <video-item v-for="threadItem in threads" :key="threadItem._source.id" :data="threadItem" />
       </div>
+      <a-empty description="还没有视频捏" v-show="threads.length===0"></a-empty>
     </panel>
-    <a-pagination class="all-video-pagination" simple :default-current="1" :total="3000" :defaultPageSize="1000" />
+    <a-pagination
+      class="all-video-pagination"
+      simple
+      :default-current="currentThreadPage"
+      :total="threadTotalCount"
+      :defaultPageSize="1000"
+      :hideOnSinglePage="true"
+    />
   </div>
 </template>
 
@@ -29,18 +46,15 @@ import Swiper from "@/components/Swiper";
 import Panel from "@/components/Panel";
 import VideoItem from "@/components/VideoItem";
 import MaskVideoItem from "@/components/MaskVideoItem";
-import { Pagination } from "ant-design-vue";
+import { Pagination, Empty } from "ant-design-vue";
 import CTools from "../../function/c_tools";
 export default {
   mounted() {
-    CTools.onScroll(
-      500,
-      () => {
-        console.log(this.videoCount);
-        this.videoCount += 20;
-      },
-      150
-    );
+    this.categoryId = this.$route.params.channel_id;
+    this.getRecommendThreads();
+    this.getHotVideoThreads();
+    this.getThreadVideos();
+    CTools.distanceBottom(300, this.getThreadVideos);
   },
   data() {
     return {
@@ -62,9 +76,93 @@ export default {
           link: "https://haokan.baidu.com/v?vid=4274877402651156258&tab=yinyue",
         },
       ],
-      videoCount: 20,
-      videos: [],
+      categoryId: 0,
+      recommendThreads: [],
+      hotThreads: [],
+      threads: [],
+      currentThreadPage: 1,
+      currentThreadLoadPage: 0,
+      currentThreadLoadLimit: 5,
+      currentThreadLoadFinished: false,
+      currentThreadLoadLoading: false,
+      threadTotalCount: 0,
     };
+  },
+  methods: {
+    getRecommendThreads() {
+      this.$dzq.request
+        .get("/threads", {
+          include: "threadVideo,user",
+          "filter[type]": 2,
+          "filter[isDeleted]": "no",
+          "page[limit]": 6,
+          "filter[categoryId]": this.categoryId,
+          "filter[isApproved]": 1,
+        })
+        .then((res) => {
+          let threads = this.$dzq.serializer(res);
+          this.recommendThreads = threads["data"];
+        });
+    },
+    getHotVideoThreads() {
+      this.$dzq.request
+        .get("/threads", {
+          include: "threadVideo",
+          "filter[type]": 2,
+          "filter[isDeleted]": "no",
+          "page[limit]": 5,
+          "filter[categoryId]": this.categoryId,
+          "filter[isApproved]": 1,
+        })
+        .then((res) => {
+          let threads = this.$dzq.serializer(res);
+          this.hotThreads = threads["data"];
+        });
+    },
+    getThreadVideos() {
+      if (
+        this.currentThreadLoadFinished === true ||
+        this.currentThreadLoadLoading === true
+      ) {
+        return;
+      }
+      this.currentThreadLoadLoading = true;
+      this.currentThreadLoadPage++;
+      this.$dzq.request
+        .get("/threads", {
+          include: "threadVideo",
+          "filter[type]": 2,
+          "filter[isDeleted]": "no",
+          "page[limit]": this.currentThreadLoadLimit,
+          "page[number]": this.currentThreadLoadPage,
+          "filter[categoryId]": this.categoryId,
+          "filter[isApproved]": 1,
+        })
+        .then((res) => {
+          let threads = this.$dzq.serializer(res);
+          if (threads["data"].length < this.currentThreadLoadLimit) {
+            this.currentThreadLoadFinished = true;
+          }
+          this.threads = this.threads.concat(threads["data"]);
+          this.currentThreadLoadLoading = false;
+          this.threadTotalCount = threads.meta.threadCount;
+        });
+    },
+  },
+  watch: {
+    "$route.params.channel_id"() {
+      this.recommendThreads = [];
+      this.threads = [];
+      this.hotThreads = [];
+      this.categoryId = this.$route.params.channel_id;
+      this.currentThreadLoadPage = 0;
+      this.currentThreadPage = 1;
+      this.currentThreadLoadLoading = false;
+      this.currentThreadLoadFinished = false;
+      this.getRecommendThreads();
+      this.getHotVideoThreads();
+      this.getThreadVideos();
+    },
   },
   components: {
     Swiper,
@@ -72,6 +170,7 @@ export default {
     VideoItem,
     MaskVideoItem,
     APagination: Pagination,
+    AEmpty: Empty,
   },
 };
 </script>
@@ -106,7 +205,7 @@ export default {
   grid-template-columns: repeat(5, 225px);
 }
 .all-video-pagination {
-  margin-top:20px;
-  text-align:center;
+  margin-top: 20px;
+  text-align: center;
 }
 </style>
