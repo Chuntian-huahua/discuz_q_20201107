@@ -29,9 +29,11 @@ export default {
     },
   },
   created() {
-    this.data["thread-video"]["duration"] = Number(
-      this.data["thread-video"]["duration"] / 100
-    ).toFixed(2);
+    if (this.data) {
+      this.data["thread-video"]["duration"] = Number(
+        this.data["thread-video"]["duration"] / 100
+      ).toFixed(2);
+    }
   },
 };
 </script>
