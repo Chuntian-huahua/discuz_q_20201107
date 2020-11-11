@@ -26,7 +26,7 @@ function sortDataRelationShips(resultData) {
   return resultData;
 }
 
-export default function (sourceData) {
+export default function(sourceData) {
   let resultData = JSON.parse(JSON.stringify(sourceData.data));
   if (resultData.length === 0) {
     return sourceData;
@@ -137,16 +137,13 @@ export default function (sourceData) {
       delete resultData[index]["relationships"];
     }
 
+    delete sourceData["data"];
+    delete sourceData["included"];
     let returnData = {
       data: resultData,
       included,
+      ...sourceData,
     };
-    if (resultData["links"]) {
-      returnData["links"] = resultData["links"];
-    }
-    if (resultData["mate"]) {
-      returnData["mate"] = resultData["mate"];
-    }
     return returnData;
   } else {
     let relationships = resultData["relationships"];
@@ -157,9 +154,12 @@ export default function (sourceData) {
     }
     Object.assign(resultData, relationships);
     delete resultData["relationships"];
+    delete sourceData["data"];
+    delete sourceData["included"];
     return {
       data: resultData,
       included,
+      ...sourceData
     };
   }
 }
