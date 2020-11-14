@@ -1,5 +1,5 @@
 <template>
-  <router-link to="/v/2" class="mask-video" v-if="data">
+  <router-link :to="`/v/${data['_source']['id']}`" class="mask-video" v-if="data">
     <img :src="data['thread-video']['cover_url']" class="video-cover" />
     <div class="video-info">
       <div class="thread-title ellipsis1">{{ data['posts']['content'] }}</div>
