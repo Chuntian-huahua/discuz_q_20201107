@@ -1,20 +1,19 @@
 <template>
-  <router-link class="video-item" to="/v/1">
-    <div class="video-left">
-      <img
-        src="https://tukuimg.bdstatic.com/processed/3ae7f6ff024c9dd4dd25eeb383b06715.jpeg@s_2,w_454,h_256,q_100"
-        class="video-cover"
-      />
-      <div class="video-time">14:57</div>
+  <router-link class="video-item" :to="`/v/${data._source.id}`" v-if="data&&data.type===2">
+    <div class="video-left" v-if="data['type']===2">
+      <img :src="data['thread-video']['cover_url']" class="video-cover" />
+      <div class="video-time">{{ data['thread-video']['duration'] }}</div>
     </div>
     <div class="video-info">
-      <h3 class="thread-title ellipsis2">神枪手潜伏山上 ，瞄准鬼子的最高军官，将战事引到最高点</h3>
+      <h3 class="thread-title ellipsis2">{{ data['posts']['content'] }}</h3>
       <ul class="thread-statistics">
         <li class="thread-statistics-item">
-          <c-icon value="icon-attention" size="16px"></c-icon>21W
+          <c-icon value="icon-attention" size="16px"></c-icon>
+          {{ data['viewCount'] }}
         </li>
         <li class="thread-statistics-item">
-          <c-icon value="icon-message" size="16px"></c-icon>83
+          <c-icon value="icon-message" size="16px"></c-icon>
+          {{ data['postCount']-1 }}
         </li>
       </ul>
     </div>
@@ -22,7 +21,21 @@
 </template>
 
 <script>
-export default {};
+export default {
+  props: {
+    data: {
+      type: Object,
+      default: null,
+    },
+  },
+  created() {
+    if (this.data&&this.data.type===2) {
+      this.data["thread-video"]["duration"] = (
+        Number(this.data["thread-video"]["duration"]) / 100
+      ).toFixed(2);
+    }
+  },
+};
 </script>
 
 <style scoped>
