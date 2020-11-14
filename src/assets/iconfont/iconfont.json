@@ -6,6 +6,13 @@
   "description": "DiscuzQ视频站模板",
   "glyphs": [
     {
+      "icon_id": "158968",
+      "name": "repair",
+      "font_class": "repair",
+      "unicode": "e738",
+      "unicode_decimal": 59192
+    },
+    {
       "icon_id": "29949",
       "name": "time_fill",
       "font_class": "timefill",
