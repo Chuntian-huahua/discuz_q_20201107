@@ -1,8 +1,10 @@
 <template>
   <div class="video-upload">
-    <!-- <a-button @click="changeCover">Change cover</a-button>
-    <input type="file" />-->
-    <a-alert type="warning" message="请不要上传太大的视频，腾讯云点播存储还是要费用滴。最好10-30MB左右，谢谢。" style="margin-bottom:20px;"></a-alert>
+    <a-alert
+      type="warning"
+      message="请不要上传太大的视频，腾讯云点播存储还是要费用滴。最好10-30MB左右，谢谢。"
+      style="margin-bottom:20px;"
+    ></a-alert>
     <a-upload-dragger
       v-show="isSelectedFile===false"
       :multiple="false"
@@ -70,9 +72,22 @@
         <div class="upload-error-message">{{ uploadErrorMessage }}</div>
       </div>
       <a-form class="publish-form" labelAlign="left" :labelCol="{span:3}">
+        <a-form-item label="频道" required>
+          <a-select
+            :default-value="$state.categories[0]['name']"
+            style="width: 120px"
+            @change="selectCategory"
+          >
+            <a-select-option
+              :value="category._source.id"
+              v-for="category in $state.categories"
+              :key="category._source.id"
+            >{{ category.name }}</a-select-option>
+          </a-select>
+        </a-form-item>
         <!-- <a-form-item label="标题" required>
           <a-input placeholder="please enter title" size="large" v-model="thread.title"></a-input>
-        </a-form-item> -->
+        </a-form-item>-->
         <!-- <a-form-item label="Cover" required>
           <a-upload accept="image/*">
             <div class="upload-cover" v-show="false">
@@ -86,7 +101,7 @@
             </div>
           </a-upload>
           <div class="upload-cover-tips">建议比例16:9，画面清晰，不小于660x370像素，最大5M</div>
-        </a-form-item> -->
+        </a-form-item>-->
         <a-form-item label="简介" required>
           <a-input
             type="textarea"
@@ -106,7 +121,7 @@
 </template>
 
 <script>
-import { Upload, Progress, Form, Input,Alert } from "ant-design-vue";
+import { Upload, Progress, Form, Input, Alert, Select } from "ant-design-vue";
 import CDiscuzQ from "../../function/CDiscuzQ";
 export default {
   data() {
@@ -116,6 +131,7 @@ export default {
         content: "",
         type: 2,
         file_id: 0,
+        category: null,
       },
       isSelectedFile: false,
       uploadProgress: 0,
@@ -205,6 +221,10 @@ export default {
         this.$message.warn("请等待视频上传完成");
         return;
       }
+      if (this.thread.category === null) {
+        this.$message.warn("请选择视频对应的分类");
+        return;
+      }
       this.submitLoading = true;
       CDiscuzQ.request
         .postData(
@@ -213,7 +233,7 @@ export default {
           {
             category: {
               type: "categories",
-              id: 1,
+              id: this.thread.category,
             },
           },
           {
@@ -229,6 +249,9 @@ export default {
           }, 1000);
         });
     },
+    selectCategory(value) {
+      this.thread.category = value;
+    },
   },
   components: {
     AUpload: Upload,
@@ -237,7 +260,9 @@ export default {
     AForm: Form,
     AFormItem: Form.Item,
     AInput: Input,
-    AAlert:Alert
+    AAlert: Alert,
+    ASelect: Select,
+    ASelectOption: Select.Option,
   },
 };
 </script>
