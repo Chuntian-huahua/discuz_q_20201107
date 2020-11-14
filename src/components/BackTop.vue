@@ -1,6 +1,6 @@
 <template>
   <div class="back-top" v-show="elShow" @click="backTop">
-    <span class="back-top-text">Back Top</span>
+    <span class="back-top-text">返回顶部</span>
     <c-icon value="icon-fold"></c-icon>
   </div>
 </template>
