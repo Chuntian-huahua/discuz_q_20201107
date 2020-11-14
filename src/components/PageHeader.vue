@@ -15,10 +15,10 @@
           <div></div>
         </slot>
         <div class="header-user">
-          <a-dropdown placement="bottomCenter" v-if="userLinks.length>0">
+          <a-dropdown placement="bottomCenter" v-if="$state.user.isLogin">
             <c-icon
               class="header-user-avatar"
-              value="https://pic.rmb.bdstatic.com/bjh/user/8332461672aadc1660ab21db2b580a1b.jpeg?x-bce-process=image/resize,m_lfit,w_100,h_100"
+              :value="$state.user.avatarUrl"
               :size="40"
               radius="50%"
             ></c-icon>
@@ -33,15 +33,15 @@
                   {{ userLinkItem.text }}
                 </router-link>
               </a-menu-item>
+              <a-menu-item class="header-user-menu-item" @click="logout">
+                <c-icon value="icon-exit" size="16px"></c-icon>
+                退出账户
+              </a-menu-item>
             </a-menu>
           </a-dropdown>
-          <c-icon
-            class="header-user-avatar"
-            value="https://pic.rmb.bdstatic.com/bjh/user/8332461672aadc1660ab21db2b580a1b.jpeg?x-bce-process=image/resize,m_lfit,w_100,h_100"
-            :size="40"
-            radius="50%"
-            v-else
-          ></c-icon>
+          <div v-else @click="clickAvatar()">
+            <c-icon class="header-user-avatar" value="icon-emoji" :size="40" radius="50%"></c-icon>
+          </div>
         </div>
       </div>
     </header>
@@ -60,6 +60,14 @@ export default {
       type: Array,
       default: [],
     },
+  },
+  methods: {
+    clickAvatar() {
+      this.$emit("clickAvatar", {});
+    },
+    logout(){
+      this.$emit("logout", {});
+    }
   },
   components: {
     ADropdown: Dropdown,
