@@ -1,17 +1,29 @@
 <template>
   <div class="video-page">
-    <a-row type="flex" justify="space-between">
+    <a-row type="flex" justify="space-between" v-if="pageLoaded">
       <a-col :span="18">
         <div class="left-col">
-          <video-player class="thread-video" :fileid="videoId">
-          </video-player>
+          <a-alert
+            message="当前视频审核中"
+            type="warning"
+            style="margin-bottom:10px;"
+            banner
+            v-if="thread.isApproved==0"
+          ></a-alert>
+          <video-player
+            class="thread-video"
+            :fileid="thread['thread-video']['file_id']"
+            :appid="appId"
+            v-if="thread.isApproved&&thread['thread-video']['file_id']"
+          ></video-player>
           <div class="video-info">
-            <h2 class="thread-title ellipsis1">可怕危机终于爆发，印度这次捂不住，印媒炒作：将会有大事发生</h2>
+            <h2 class="thread-title ellipsis1">{{ thread.posts.content }}</h2>
             <div class="thread-details">
-              <div>50万次播放 | 发布时间：2020年8月18日</div>
+              <div>{{ thread.viewCount }}次播放 | 发布时间：{{ thread.createdAt }}</div>
               <ul class="thread-operate">
                 <li class="thread-operate-item">
-                  <c-icon value="icon-appreciate" size="22px"></c-icon>3971
+                  <c-icon value="icon-appreciate" size="22px"></c-icon>
+                  {{ thread.posts.likeCount }}
                 </li>
                 <li class="thread-operate-item">
                   <c-icon value="icon-favor" size="22px"></c-icon>收藏
@@ -32,16 +44,15 @@
             </div>
             <div class="thread-author">
               <router-link to="/user/1">
-                <img
-                  src="https://pic.rmb.bdstatic.com/fa8a02c6084744885a01a63c1b9d3c33.jpeg@s_2,w_272,h_272,q_80"
-                  class="author-avatar"
-                />
+                <img :src="thread['users']['avatarUrl']" class="author-avatar" />
               </router-link>
               <div class="thread-author-info">
                 <p class="thread-author-username">
-                  <router-link to="/user/1">看看你的兔子</router-link>
+                  <router-link to="/user/1">{{ thread['users'].username }}</router-link>
                 </p>
-                <p class="thread-author-detail">波动影视旗下帐号 | 17万粉丝</p>
+                <p
+                  class="thread-author-detail"
+                >{{ thread['users'].signature }} | {{ thread['users'].fansCount }}粉丝</p>
               </div>
               <a-button type="primary" class="thread-author-follow">
                 <c-icon value="icon-add" size="14px"></c-icon>关注
@@ -50,24 +61,30 @@
           </div>
           <div class="thread-posts">
             <h3 class="thread-posts-title">
-              <c-icon value="icon-message" size="22px"></c-icon>324条评论
+              <c-icon value="icon-message" size="22px"></c-icon>
+              {{ posts.length }}条评论
             </h3>
-            <div class="thread-posts-publish">
-              <img
-                class="thread-posts-publish-author-avatar"
-                src="https://pic.rmb.bdstatic.com/bjh/user/8332461672aadc1660ab21db2b580a1b.jpeg?x-bce-process=image/resize,m_lfit,w_100,h_100"
-              />
+            <div class="thread-posts-publish" v-if="$state.user.isLogin">
+              <img class="thread-posts-publish-author-avatar" :src="$state.user.avatarUrl" />
               <div class="thread-posts-publish-main">
                 <comment-input
                   placeholder="说说你的看法"
                   :autoSize="{ minRows: 5, maxRows: 7 }"
                   :value="commentValue"
-                  @change="commentValue=$event"
+                  @reply="sendComment"
+                  :loading="sendLoading"
                 />
               </div>
             </div>
             <ul class="thread-posts-list">
-              <post-item class="thread-post-item" :has-comment="true" />
+              <post-item
+                class="thread-post-item"
+                :has-comment="true"
+                :data="postItem"
+                v-for="postItem in posts"
+                :key="postItem._source.id"
+                :thread-id="threadId"
+              />
             </ul>
           </div>
         </div>
@@ -80,7 +97,12 @@
             <a-switch size="small"></a-switch>
           </div>
           <div class="next-videos">
-            <l-f-video-item class="next-video-item" v-for="index in 8" :key="index"></l-f-video-item>
+            <l-f-video-item
+              class="next-video-item"
+              v-for="threadItem in relatedThreads"
+              :key="threadItem._source.id"
+              :data="threadItem"
+            ></l-f-video-item>
           </div>
         </panel>
       </a-col>
@@ -89,23 +111,146 @@
 </template>
 
 <script>
-import { Switch, Dropdown, Input } from "ant-design-vue";
+import { Switch, Dropdown, Input, Alert } from "ant-design-vue";
 import Panel from "@/components/Panel";
 import LFVideoItem from "@/components/LFVideoItem";
 import CommentInput from "@/components/CommentInput";
 import PostItem from "@/components/PostItem";
 import VideoPlayer from "@/components/VideoPlayer";
+import CTools from "../../function/c_tools";
+import serializer from "../../function/CDiscuzQ/serializer";
+import Config from "../../config";
 
 export default {
   data() {
     return {
+      pageLoaded: false,
+      thread: null,
       threadId: null,
-      videoId: "5285890809629935806",
       reload: false,
-      commentValue: "123",
+      commentValue: "",
+      relatedThreads: [],
+      posts: [],
+      appId: Config.TovAppId,
+      sendLoading: false,
     };
   },
+  created() {
+    this.threadId = this.$route.params.thread_id;
+  },
+  mounted() {
+    this.getThreads();
+    this.getRelatedThreads();
+    this.getThreadPosts();
+  },
   methods: {
+    getThreads() {
+      this.pageLoaded = false;
+      this.$dzq.request
+        .get("/threads/" + this.threadId, {
+          include: ["user", "firstPost", "threadVideo"],
+        })
+        .then((res) => {
+          let thread = this.$dzq.serializer(res);
+          thread = thread["data"];
+          if (thread["isDeleted"] === true) {
+            this.$message.error("视频不存在");
+            this.$router.go(-1);
+            return;
+          }
+          thread["posts"]["content"] = String(
+            thread["posts"]["content"]
+          ).trim();
+          this.thread = thread;
+          this.pageLoaded = true;
+        });
+    },
+    getRelatedThreads() {
+      this.$dzq.request
+        .get("/threads/relate/" + this.threadId, {
+          limit: 20,
+          include: ["firstPost", "threadVideo"],
+          "filter[type]": 2,
+        })
+        .then((res) => {
+          let threads = this.$dzq.serializer(res);
+          threads = threads["data"];
+          this.relatedThreads = threads;
+        });
+    },
+    getThreadPosts() {
+      this.$dzq.request
+        .get("/posts", {
+          include:
+            "user,replyUser,images,thread,user.groups,thread.category,thread.firstPost,lastThreeComments,lastThreeComments.user,lastThreeComments.replyUser,deletedUser,lastDeletedLog,lastThreeComments.images",
+          "filter[thread]": this.threadId,
+          "filter[isApproved]": 1,
+          "filter[isDeleted]": "no",
+          "filter[isComment]": "no",
+          sort: "-createdAt",
+          "page[number]": 1,
+          "page[limit]": 5,
+        })
+        .then((res) => {
+          let searializerData = this.$dzq.serializer(res);
+          if (searializerData["data"].length > 0) {
+            let postComments = searializerData["included"]["comment-posts"];
+            let postsData = searializerData["data"];
+            for (let id in postsData) {
+              if (postsData[id]["lastThreeComments"].length > 0) {
+                for (let index in postsData[id]["lastThreeComments"]) {
+                  let commenId = postsData[id]["lastThreeComments"][index];
+                  postsData[id]["lastThreeComments"][index] =
+                    postComments[postsData[id]["lastThreeComments"][index]];
+                }
+              }
+            }
+            this.posts = postsData;
+          }
+        });
+    },
+    sendComment(content) {
+      if (!this.$state.user.isLogin) {
+        this.$message.warning("请登录后重试");
+        return;
+      }
+      if (!content) {
+        this.$message.warning("请输入内容");
+        return;
+      }
+      this.sendLoading = true;
+      this.$dzq.request
+        .postData(
+          "/posts",
+          {
+            content,
+          },
+          {
+            thread: {
+              type: "threads",
+              id: this.threadId,
+            },
+          }
+        )
+        .then((res) => {
+          let post = this.$dzq.serializer(res);
+          post = post["data"];
+          this.posts.unshift(post);
+          this.sendLoading = false;
+        })
+        .catch((err) => {
+          this.sendLoading = false;
+        });
+    },
+  },
+  watch: {
+    "$route.params.thread_id"() {
+      this.posts = [];
+      this.threadId = this.$route.params.thread_id;
+      this.getThreads();
+      this.getRelatedThreads();
+      this.getThreadPosts();
+    },
   },
   components: {
     Panel,
@@ -116,6 +261,7 @@ export default {
     ASwitch: Switch,
     ADropdown: Dropdown,
     AInput: Input,
+    AAlert: Alert,
   },
 };
 </script>
@@ -180,7 +326,7 @@ export default {
 }
 .thread-author-info {
   flex-grow: 1;
-  margin-left: 12px;
+  margin: 0 20px 0 12px;
 }
 .thread-author-username a {
   color: #000;

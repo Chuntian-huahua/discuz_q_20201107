@@ -2,6 +2,7 @@
   <div class="video-upload">
     <!-- <a-button @click="changeCover">Change cover</a-button>
     <input type="file" />-->
+    <a-alert type="warning" message="请不要上传太大的视频，腾讯云点播存储还是要费用滴。最好10-30MB左右，谢谢。" style="margin-bottom:20px;"></a-alert>
     <a-upload-dragger
       v-show="isSelectedFile===false"
       :multiple="false"
@@ -50,29 +51,29 @@
             class="upload-file-status upload-file-status-success"
             v-show="uploadStatus==='success'"
           >
-            <c-icon value="icon-roundcheckfill"></c-icon>Uploaded complete
+            <c-icon value="icon-roundcheckfill"></c-icon>上传完成
           </div>
           <div
             class="upload-file-status upload-file-status-active"
             v-show="uploadStatus==='active'"
           >
-            <c-icon value="icon-timefill"></c-icon>Uploading
+            <c-icon value="icon-timefill"></c-icon>上传中
           </div>
           <div
             class="upload-file-status upload-file-status-error"
             v-show="uploadStatus==='exception'"
           >
-            <c-icon value="icon-timefill"></c-icon>Upload error
+            <c-icon value="icon-timefill"></c-icon>上传失败
           </div>
         </div>
         <a-progress class="upload-progress" :percent="uploadProgress" :status="uploadStatus" />
         <div class="upload-error-message">{{ uploadErrorMessage }}</div>
       </div>
       <a-form class="publish-form" labelAlign="left" :labelCol="{span:3}">
-        <a-form-item label="Title" required>
+        <!-- <a-form-item label="标题" required>
           <a-input placeholder="please enter title" size="large" v-model="thread.title"></a-input>
-        </a-form-item>
-        <a-form-item label="Cover" required>
+        </a-form-item> -->
+        <!-- <a-form-item label="Cover" required>
           <a-upload accept="image/*">
             <div class="upload-cover" v-show="false">
               <c-icon value="icon-pic"></c-icon>upload cover
@@ -85,19 +86,19 @@
             </div>
           </a-upload>
           <div class="upload-cover-tips">建议比例16:9，画面清晰，不小于660x370像素，最大5M</div>
-        </a-form-item>
-        <a-form-item label="Description" required>
+        </a-form-item> -->
+        <a-form-item label="简介" required>
           <a-input
             type="textarea"
-            placeholder="please enter description"
+            placeholder="输入简介，收录率更高哦"
             size="large"
             :autoSize="{minRows:5,minRows:5}"
             v-model="thread.content"
           ></a-input>
         </a-form-item>
         <a-form-item class="publish-form-operate">
-          <a-button size="large" type="primary" @click="save" :loading="submitLoading">Submit</a-button>
-          <a-button size="large">Cancel</a-button>
+          <a-button size="large" type="primary" @click="save" :loading="submitLoading">发布</a-button>
+          <a-button size="large">取消</a-button>
         </a-form-item>
       </a-form>
     </div>
@@ -105,7 +106,7 @@
 </template>
 
 <script>
-import { Upload, Progress, Form, Input } from "ant-design-vue";
+import { Upload, Progress, Form, Input,Alert } from "ant-design-vue";
 import CDiscuzQ from "../../function/CDiscuzQ";
 export default {
   data() {
@@ -128,7 +129,6 @@ export default {
       submitLoading: false,
     };
   },
-  mounted() {},
   methods: {
     uploadVideo({ file }) {
       let tcVod = new TcVod.default({
@@ -174,7 +174,6 @@ export default {
     getUploadSignature() {
       return CDiscuzQ.request.get("/signature").then((res) => {
         let data = CDiscuzQ.serializer(res)["data"];
-        console.log(data);
         let signature = data["signature"];
         return signature;
       });
@@ -238,6 +237,7 @@ export default {
     AForm: Form,
     AFormItem: Form.Item,
     AInput: Input,
+    AAlert:Alert
   },
 };
 </script>

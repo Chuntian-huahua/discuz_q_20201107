@@ -99,10 +99,10 @@ export default {
     }
   },
   async get(route = null, query = null, headers = null) {
-    return this.send(route, query, null, headers, "GET");
+    return await this.send(route, query, null, headers, "GET");
   },
   async post(route = null, body = null, query = null, headers = null) {
-    return this.send(route, query, body, headers, "POST");
+    return await this.send(route, query, body, headers, "POST");
   },
   /**
    * 发送数据
@@ -128,16 +128,42 @@ export default {
     }
     data["relationships"] = relationships;
     data["attributes"] = attributes;
-    return this.post(route, { data }, query, headers);
+    return await this.post(route, { data }, query, headers);
+  },
+  /**
+   * 修改数据
+   * @param {string} route 请求URI
+   * @param {object} attributes 提交的属性
+   * @param {object} relationships 相关的数据
+   * @param {object} data 发送的数据，会把attributes和relationships 添加这里
+   * @param {string} query 请求的查询参数
+   * @param {object} headers 请求的头部
+   */
+  async patchData(
+    route,
+    attributes,
+    relationships = null,
+    data = {},
+    query = null,
+    headers = null
+  ) {
+    for (let key in relationships) {
+      relationships[key] = {
+        data: relationships[key],
+      };
+    }
+    data["relationships"] = relationships;
+    data["attributes"] = attributes;
+    return await this.patch(route, { data }, query, headers);
   },
   async delete(route = null, query = null, headers = null) {
-    return this.send(route, query, null, headers, "DELETE");
+    return await this.send(route, query, null, headers, "DELETE");
   },
   async put(route = null, body = null, query = null, headers = null) {
-    return this.send(route, query, body, headers, "PUT");
+    return await this.send(route, query, body, headers, "PUT");
   },
   async patch(route = null, body = null, query = null, headers = null) {
-    return this.send(route, query, body, headers, "PATCH");
+    return await this.send(route, query, body, headers, "PATCH");
   },
   async upload(
     file,
@@ -158,5 +184,23 @@ export default {
     Object.assign(requestHeaders, headers);
     let url = createRequestUrl(route, query);
     return await HTTP.request(url, "POST", requestHeaders, body);
+  },
+  errors(errors, messages = {}) {
+    let errorMessages = [];
+    for (let errorIndex in errors) {
+      let error = errors[errorIndex];
+      if (error.detail) {
+        errorMessages.push(...error.detail);
+      } else {
+        if (messages.hasOwnProperty(error.code)) {
+          errorMessages.push(messages[error.code]);
+        } else if (messages.hasOwnProperty(error.status)) {
+          errorMessages.push(messages[error.status]);
+        } else {
+          errorMessages.push(`${error.status} ${error.code}`);
+        }
+      }
+    }
+    return errorMessages;
   },
 };

@@ -1,11 +1,11 @@
 <template>
   <div class="author-layout">
-    <page-header position="fixed" :userLinks="userLinks">
+    <page-header position="fixed" :userLinks="userLinks" @logout="accountLogout">
       <template v-slot:logo>
         <router-link to="/" class="header-logo" slot="logo"></router-link>
       </template>
       <template v-slot:right>
-        <ul class="header-link">
+        <ul class="header-link" v-if="$state.user.isLogin">
           <li class="header-link-item">
             <router-link to="/">
               <c-icon value="icon-notice" size="24px"></c-icon>
@@ -16,16 +16,16 @@
     </page-header>
 
     <main class="page-main">
-      <a-row>
+      <a-row v-if="$state.user.isLogin">
         <a-col class="page-aside" :span="4">
           <aside class="page-aside-main">
             <img
-              src="https://pic.rmb.bdstatic.com/bjh/user/8332461672aadc1660ab21db2b580a1b.jpeg?x-bce-process=image/resize,m_lfit,w_100,h_100"
+              :src="$state.user.avatarUrl"
               class="user-avatar"
             />
-            <p class="user-username">眼看精选视频</p>
+            <p class="user-username">{{ $state.user.username }}</p>
             <div class="user-desc ellipsis1">
-              <c-icon value="icon-form" size="14px"></c-icon>精选优质、有趣的视频分享
+              <c-icon value="icon-form" size="14px"></c-icon>{{ $state.user.signature||"居然没写个性签名😔" }}
             </div>
             <router-link to="/author/upload">
               <a-button class="upload-video" type="primary">上传作品</a-button>
@@ -58,26 +58,42 @@
           <router-view></router-view>
         </a-col>
       </a-row>
+      <a-empty
+        style="padding-top:40px;"
+        description="需要登录后才可以发布视频"
+        :image-style="{
+      height: '180px',
+    }"
+        v-else
+      >
+        <img src="../assets/images/no_login.png" slot="image" style="width:300px;height:auto;" />
+      </a-empty>
     </main>
   </div>
 </template>
 
 <script>
 import PageHeader from "@/components/PageHeader";
+import { Empty } from "ant-design-vue";
 export default {
   data() {
     return {
       userLinks: [
-        {
-          text: "退出账户",
-          icon: "icon-exit",
-          link: "/",
-        },
       ],
     };
   },
+  methods: {
+    accountLogout() {
+      this.$dzq.user.logout();
+      this.$state.user = {
+        isLogin: false,
+      };
+      this.$router.replace("/");
+    },
+  },
   components: {
     PageHeader,
+    AEmpty: Empty,
   },
 };
 </script>
@@ -165,7 +181,7 @@ export default {
   background-color: #f7f7f7;
 }
 .aside-nav-item a {
-  display:block;
+  display: block;
   padding-left: 68px;
   width: 100%;
   height: 38px;

@@ -19,6 +19,7 @@ let TCPLayer = null;
 export default {
   props: {
     fileid: String,
+    appid:String|Number
   },
   data() {
     return {
@@ -39,7 +40,7 @@ export default {
       TCPLayer = TCPlayer("player-container-id", {
         /**player-container-id 为播放器容器ID，必须与html中一致*/
         fileID: this.fileid /**请传入需要播放的视频fileID 必须 */,
-        appID: "1500002358" /**请传入点播账号的appID 必须 */,
+        appID:this.appid /**请传入点播账号的appID 必须 */,
         psign: "",
         bigPlayButton: false,
         /**其他参数请在开发文档中查看 */

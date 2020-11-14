@@ -43,6 +43,11 @@ function onScroll(cb, scrollTop = null, scrollLeft = null, once = false) {
   if (once === true) {
     cbName += "_once";
   }
+  for (let id in onScrollCallBackTrack) {
+    if (onScrollCallBackTrack[id]["cb"] === cb) {
+      delete onScrollCallBackTrack[id];
+    }
+  }
   onScrollCallBackTrack[cbName] = {
     scrollTop,
     scrollLeft,

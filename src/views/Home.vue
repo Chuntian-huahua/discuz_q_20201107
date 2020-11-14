@@ -1,5 +1,25 @@
 <template>
   <div class="home">
+    <a-alert
+      message="目前是可以浏览视频、发布视频、注册、登录、切换频道等，部分功能可以前往 q.cooocc.com 操作后回到这里浏览效果，例如帖子回复等"
+      banner
+    ></a-alert>
+    <a-collapse accordion style="margin:10px 0;">
+      <a-collapse-panel key="1" header="更新记录">
+        <ul class=updated-log>
+           <li>
+            2020-11-14
+            <ol>
+              <li>增加帖子的回复功能</li>
+              <li>增加帖子的评论点赞功能</li>
+            </ol>
+          </li>
+          <li>
+            2020-11-07：开始制作
+          </li>
+        </ul>
+      </a-collapse-panel>
+    </a-collapse>
     <div class="home-recommend">
       <a-carousel class="recommend-swiper" arrows autoplay dotPosition="top">
         <div slot="prevArrow" class="recommend-swiper-button recommend-swiper-prev">
@@ -58,9 +78,7 @@
         />
       </ul>
       <a-empty class="channel-video-empty" v-show="channel.__loaded&&channel.threads.length===0">
-        <span slot="description">
-          该频道下还没有视频哦
-        </span>
+        <span slot="description">该频道下还没有视频哦</span>
       </a-empty>
     </Panel>
   </div>
@@ -70,7 +88,7 @@
 import Panel from "@/components/Panel";
 import MaskVideoItem from "@/components/MaskVideoItem";
 import VideoItem from "@/components/VideoItem";
-import { Carousel, Skeleton,Empty } from "ant-design-vue";
+import { Carousel, Skeleton, Empty, Collapse } from "ant-design-vue";
 import CTools from "../function/c_tools";
 export default {
   name: "Home",
@@ -121,6 +139,7 @@ export default {
           "filter[isDeleted]": "no",
           "filter[type]": 2,
           "page[limit]": 6,
+          "filter[isApproved]": 1,
         })
         .then((res) => {
           let threads = this.$dzq.serializer(res)["data"];
@@ -128,11 +147,15 @@ export default {
         });
     },
     getCategoryVideoThread(categoryId, index) {
+      if (this.channels[index]["__loading"] === true) {
+        return;
+      }
       this.channels[index]["__loading"] = true;
       this.$dzq.request
         .get("/threads", {
           include: "threadVideo",
           "filter[isDeleted]": "no",
+          "filter[isApproved]": 1,
           "filter[type]": 2,
           "page[limit]": 5,
           "filter[categoryId]": categoryId,
@@ -151,7 +174,9 @@ export default {
     VideoItem,
     ACarousel: Carousel,
     ASkeleton: Skeleton,
-    AEmpty:Empty
+    AEmpty: Empty,
+    ACollapse: Collapse,
+    ACollapsePanel: Collapse.Panel,
   },
 };
 </script>
@@ -160,6 +185,10 @@ export default {
 .home {
   margin: 25px auto;
   width: var(--main-width);
+}
+
+.updated-log>li {
+  margin-bottom:10px;
 }
 
 .channel-name {

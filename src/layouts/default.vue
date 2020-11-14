@@ -1,6 +1,12 @@
 <template>
   <div id="app">
-    <page-header :position="isHomePage?'relative':'fixed'" :userLinks="userLinks">
+    <!-- 头部 -->
+    <page-header
+      :position="isHomePage?'relative':'fixed'"
+      :userLinks="headerUserLinks"
+      @clickAvatar="showSigninModal=true"
+      @logout="accountLogout"
+    >
       <router-link to="/" class="header-logo" slot="logo"></router-link>
       <template v-slot:left>
         <div class="header-channel" :class="{ 'header-channel-avtive':isShowChannelBlocks }">
@@ -21,14 +27,19 @@
       <template v-slot:right>
         <ul class="header-link">
           <li class="header-link-item">
+            <a target="_blank" href="http://q.cooocc.com">
+              <c-icon value="http://q.cooocc.com/favicon.ico" :size="20"></c-icon>源数据站
+            </a>
+          </li>
+          <li class="header-link-item">
             <router-link to="/author/upload">
-              <c-icon value="icon-upload" :size="24"></c-icon>upload
+              <c-icon value="icon-upload" :size="24"></c-icon>上传视频
             </router-link>
           </li>
           <li class="header-link-item">
             <a-dropdown placement="bottomCenter">
               <span>
-                <c-icon value="icon-mobile" :size="24"></c-icon>Mobile
+                <c-icon value="icon-mobile" :size="24"></c-icon>手机浏览
               </span>
               <div class="header-mobile-qrcode" slot="overlay">
                 <span class="header-mobile-title">扫码下载好看APP</span>
@@ -40,11 +51,59 @@
             </a-dropdown>
           </li>
           <li class="header-link-item">
-            <c-icon value="icon-we" :size="24"></c-icon>subscribe
+            <c-icon value="icon-we" :size="24"></c-icon>关注动态
           </li>
         </ul>
       </template>
     </page-header>
+    <a-modal
+      :visible="showSigninModal"
+      :footer="null"
+      :title="null"
+      @cancel="showSigninModal=false"
+    >
+      <div class="signin-model-title">
+        <div
+          class="signin-model-title-text"
+          :class="{ 'active':currentSigninMode==='login' }"
+          @click="switchSigninMode('login')"
+        >登录</div>
+        <div
+          class="signin-model-title-text"
+          :class="{ 'active':currentSigninMode==='register' }"
+          @click="switchSigninMode('register')"
+        >注册</div>
+      </div>
+      <a-form :label-col="{ span: 5 }" :wrapper-col="{ span: 12 }" @submit="signin">
+        <a-form-item label="用户名">
+          <a-input
+            v-model="loginForm.username"
+            :disabled="$state.user.isLogin"
+            placeholder="请输入登录用户名"
+          />
+        </a-form-item>
+        <a-form-item label="密码">
+          <a-input-password
+            v-model="loginForm.password"
+            :disabled="$state.user.isLogin"
+            placeholder="请输入用户密码"
+          />
+        </a-form-item>
+        <a-form-item
+          v-if="$state.user.isLogin"
+          :wrapper-col="{ span: 12, offset: 5 }"
+          @click="showSigninModal=false"
+        >您已经登录了：{{ $state.user.username }}</a-form-item>
+        <a-form-item :wrapper-col="{ span: 12, offset: 5 }">
+          <a-button
+            type="primary"
+            html-type="submit"
+            :disabled="$state.user.isLogin"
+          >{{ currentSigninMode==="login"?'登录':'注册' }}</a-button>
+        </a-form-item>
+      </a-form>
+    </a-modal>
+    <!-- 点击频道后弹出的频道弹窗 -->
     <div class="header-channels" v-show="isShowChannelBlocks" @click.stop="channelBlockClick">
       <div class="header-channels-list">
         <ul
@@ -52,12 +111,16 @@
           v-for="(channelBlock,channelBlockIndex) in channelBlocks"
           :key="channelBlockIndex"
         >
-          <li class="header-channel-item" v-for="channel in channelBlock" :key="channel._source.id">
-            <router-link :to="`/channel/${channel._source.id}`">{{ channel.name }}</router-link>
-          </li>
+          <li
+            class="header-channel-item"
+            v-for="channel in channelBlock"
+            :key="channel._source.id"
+            @click.stop="viewChannel(channel._source.id)"
+          >{{ channel.name }}</li>
         </ul>
       </div>
     </div>
+    <!-- 首页悬浮频道bar -->
     <a-affix v-show="isHomePage">
       <div class="channel-bar">
         <ul class="channel-bar-list">
@@ -74,7 +137,7 @@
               :to="`/channel/${channel._source.id}`"
             >{{ channel.name }}</router-link>
           </li>
-          <li class="channel-bar-item show-more-channel" v-if="channelMore.length>0">
+          <li class="channel-bar-item show-more-channel" v-show="channelMore.length>0">
             更多
             <ul class="channel-more">
               <li
@@ -84,15 +147,18 @@
               >
                 <router-link
                   :class="{active:currentChannelId==moreChannelItem._source.id}"
-                  :to="`/channel/${currentChannelId._source.id}`"
-                >{{ moreChannelItem.text }}</router-link>
+                  :to="`/channel/${moreChannelItem._source.id}`"
+                >{{ moreChannelItem.name }}</router-link>
               </li>
             </ul>
           </li>
         </ul>
       </div>
     </a-affix>
-    <router-view />
+    <keep-alive>
+      <router-view />
+    </keep-alive>
+    <!-- 底部 -->
     <footer class="footer">
       <div class="footer-about">
         <div class="footer-about-inner layout">
@@ -130,11 +196,8 @@
       </div>
       <div class="footer-copyright">
         <div class="layout">
-          © 2020 Baidu 京ICP证030173号
-          <a
-            href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=11000002000001"
-            target="_blank"
-          >京公网安备11000002000001</a> 京网文（2017）2863-327号 Powered by DiscuzQ! & Template By COOOCC
+          © 2020 COOOCC
+          Powered by DiscuzQ! & Template By COOOCC
         </div>
       </div>
     </footer>
@@ -143,7 +206,7 @@
 </template>
 
 <script>
-import { Dropdown, Menu, Affix } from "ant-design-vue";
+import { Dropdown, Menu, Affix, Modal, Form, Input } from "ant-design-vue";
 import BackTop from "@/components/BackTop";
 import PageHeader from "@/components/PageHeader";
 
@@ -172,12 +235,13 @@ export default {
           text: "消息中心",
           link: "/",
         },
-        {
-          icon: "icon-exit",
-          text: "退出登录",
-          link: "/",
-        },
       ],
+      showSigninModal: false,
+      currentSigninMode: "login",
+      loginForm: {
+        username: this.$state.user.username || "",
+        password: "",
+      },
     };
   },
   mounted() {
@@ -189,24 +253,80 @@ export default {
         this.currentChannelId = this.$route.params.channel_id;
       }
     }
-    let channels = this.channels;
-    console.log(channels);
+    let channels = JSON.parse(JSON.stringify(this.channels));
     let blockCount = Math.ceil(channels.length / 6);
     let channelBlocks = [];
     for (let i = 0; i < blockCount; i++) {
       channelBlocks.push([...channels.slice(i * 6, (i + 1) * 6)]);
     }
     this.channelBlocks = channelBlocks;
+
     if (channels.length > 15) {
-      let channelMore = [];
-      for (let i = 15; i < channels.length; i++) {
-        channelMore.push(channels[i]);
-      }
-      channels.splice(15, channels.length - 15);
-      this.channelMore = channelMore;
+      this.channels = channels.slice(0, 14);
+      this.channelMore = channels.slice(14);
     }
   },
   methods: {
+    signin(e) {
+      e.preventDefault();
+      let loginForm = this.loginForm;
+      if (!loginForm.username) {
+        this.$message.warning("请输入用户名");
+        return;
+      }
+      if (!loginForm.password) {
+        this.$message.warning("请输入用户密码");
+        return;
+      }
+      if (this.currentSigninMode === "login") {
+        this.$dzq.request
+          .postData("/login", {
+            username: loginForm.username,
+            password: loginForm.password,
+          })
+          .then((res) => {
+            let userInfo = this.$dzq.user.loginSuccess(res);
+            userInfo["isLogin"] = true;
+            this.$state.user = userInfo;
+            this.$message.success("登录成功");
+            this.showSigninModal = false;
+          })
+          .catch((err) => {
+            let errorMessages = this.$dzq.request.errors(err.errors, {
+              login_failed: "Login failed",
+            });
+            for (let index in errorMessages) {
+              this.$message.error(errorMessages[index]);
+            }
+          });
+      } else {
+        this.$dzq.request
+          .postData("/register", {
+            username: loginForm.username,
+            password: loginForm.password,
+          })
+          .then(async (res) => {
+            let data = this.$dzq.serializer(res)["data"];
+            let userId = data["_source"]["id"];
+            let userInfo = null;
+            await this.$dzq.request.get("/users/" + userId).then((res) => {
+              userInfo = this.$dzq.serializer(res)["data"];
+            });
+            data["users"] = userInfo;
+            this.$dzq.user.loginSuccess(data, true);
+            this.$message.success("注册成功");
+            this.showSigninModal = false;
+          })
+          .catch((err) => {
+            let errorMessages = this.$dzq.request.errors(err.errors, {
+              login_failed: "Login failed",
+            });
+            for (let index in errorMessages) {
+              this.$message.error(errorMessages[index]);
+            }
+          });
+      }
+    },
     clickHideChannelBlock() {
       if (this.isShowChannelBlocks === true) {
         this.isShowChannelBlocks = false;
@@ -221,6 +341,28 @@ export default {
     },
     channelBlockClick() {
       this.isShowChannelBlocks = true;
+    },
+    viewChannel(channelId) {
+      this.isShowChannelBlocks = false;
+      this.$router.push("/channel/" + channelId);
+    },
+    switchSigninMode(mode) {
+      this.currentSigninMode = mode;
+    },
+    accountLogout() {
+      this.$dzq.user.logout();
+      this.$state.user = {
+        isLogin: false,
+      };
+    },
+  },
+  computed: {
+    headerUserLinks() {
+      if (this.$state.user.isLogin) {
+        return this.userLinks;
+      } else {
+        return [];
+      }
     },
   },
   watch: {
@@ -250,6 +392,11 @@ export default {
     AMenu: Menu,
     AMenuItem: Menu.Item,
     AAffix: Affix,
+    AModal: Modal,
+    AForm: Form,
+    AFormItem: Form.Item,
+    AInput: Input,
+    AInputPassword: Input.Password,
     BackTop,
     PageHeader,
   },
@@ -311,6 +458,27 @@ export default {
   margin-right: 5px;
 }
 
+.signin-model-title {
+  display: flex;
+  align-items: flex-end;
+  margin-bottom: 20px;
+  font-size: 16px;
+  user-select: none;
+}
+.signin-model-title .signin-model-title-text {
+  color: #666;
+  letter-spacing: 2px;
+  cursor: pointer;
+}
+.signin-model-title .signin-model-title-text.active {
+  color: #000;
+  font-weight: bold;
+  font-size: 22px;
+}
+.signin-model-title .signin-model-title-text:last-child {
+  margin-left: 10px;
+}
+
 /* 右侧链接 */
 .header-link {
   margin-right: 12px;
@@ -334,7 +502,9 @@ export default {
   color: var(--text-color-secondary);
 }
 .header-link-item .c-icon {
-  display: block;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   height: 32px;
 }
 .header-link-item:hover {
@@ -400,9 +570,8 @@ export default {
   width: 70px;
   line-height: 2;
   text-align: center;
-}
-.header-channel-item a {
   color: #333;
+  cursor: pointer;
 }
 
 /* 频道bar */
