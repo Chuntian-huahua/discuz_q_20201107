@@ -13,7 +13,7 @@
       </li>
       <li class="comment-input-operate-item comment-input-submit">
         <span class="comment-input-text-count">{{ values.length }}/{{ maxLength }}</span>
-        <a-button type="primary">回复</a-button>
+        <a-button type="primary" @click="$emit('reply',values)" :loading="loading">回复</a-button>
       </li>
     </ul>
   </div>
@@ -27,17 +27,21 @@ export default {
       tpye: Number,
       default: 500,
     },
-    value:String
+    value: String,
+    loading:{
+      type:Boolean,
+      default:false
+    }
   },
-  data(){
+  data() {
     return {
-      values:this.value||"",
-    }
+      values: this.value || "",
+    };
   },
-  methods:{
-    inputValue(e){
-     this.$emit("change",this.values);
-    }
+  methods: {
+    inputValue(e) {
+      this.$emit("change", this.values);
+    },
   },
   components: {
     AInput: Input,
