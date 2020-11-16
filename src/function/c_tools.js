@@ -31,13 +31,41 @@ function throttle(func, delay) {
   };
 }
 
+function compareDistance(one, operate, two) {
+  switch (operate) {
+    case ">":
+      return one > two;
+      break;
+    case "==":
+      return one == two;
+      break;
+    case "<":
+      return one < two;
+      break;
+    case "<=":
+      return one <= two;
+      break;
+    default:
+    case ">=":
+      return one >= two;
+      break;
+  }
+}
+
 /**
- * 当距离底部多大距离时触发回调函数
+ * 滚动到指定距离时触发回调函数
  * @param {number} distance 底部距离
  * @param {function} callback 回调函数
  * @param {number} debounceTime 防抖时间差
  */
-function onScroll(cb, scrollTop = null, scrollLeft = null, once = false) {
+function onScroll(
+  cb,
+  scrollTop = null,
+  scrollLeft = null,
+  once = false,
+  operator = ">=",
+  cb2 = null
+) {
   let scrollCBLength = Object.keys(onScrollCallBackTrack).length;
   let cbName = `cb_${scrollCBLength}`;
   if (once === true) {
@@ -69,29 +97,43 @@ function onScroll(cb, scrollTop = null, scrollLeft = null, once = false) {
           if (onScrollCallBackTrack[key].hasOwnProperty("scrollTop")) {
             if (
               onScrollCallBackTrack[key]["scrollTop"] &&
-              scrollTop >= onScrollCallBackTrack[key]["scrollTop"]
+              compareDistance(
+                scrollTop,
+                operator,
+                onScrollCallBackTrack[key]["scrollTop"]
+              )
             ) {
               onScrollCallBackTrack[key]["cb"]();
               if (/once/.test(key)) {
                 delete onScrollCallBackTrack[key];
               }
+            } else {
+              if (cb2) {
+                cb2();
+              }
             }
-          }
-          if (
+          } else if (
             onScrollCallBackTrack[key] &&
             onScrollCallBackTrack[key].hasOwnProperty("scrollLeft")
           ) {
             if (
               onScrollCallBackTrack[key]["scrollLeft"] &&
-              scrollLeft >= onScrollCallBackTrack[key]["scrollLeft"]
+              compareDistance(
+                scrollLeft,
+                operator,
+                onScrollCallBackTrack[key]["scrollLeft"]
+              )
             ) {
               onScrollCallBackTrack[key]["cb"]();
               if (/once/.test(key)) {
                 delete onScrollCallBackTrack[key];
               }
+            } else {
+              if (cb2) {
+                cb2();
+              }
             }
-          }
-          if (
+          } else if (
             onScrollCallBackTrack[key] &&
             onScrollCallBackTrack[key].hasOwnProperty("scrollLeft") &&
             onScrollCallBackTrack[key].hasOwnProperty("scrollTop")
@@ -99,15 +141,24 @@ function onScroll(cb, scrollTop = null, scrollLeft = null, once = false) {
             if (
               onScrollCallBackTrack[key]["scrollLeft"] &&
               onScrollCallBackTrack[key]["scrollTop"] &&
-              scrollLeft >=
-                onScrollCallBackTrack[key][
-                  "scrollLeft" &&
-                    scrollTop >= onScrollCallBackTrack[key]["scrollTop"]
-                ]
+              compareDistance(
+                scrollLeft,
+                operator,
+                onScrollCallBackTrack[key]["scrollLeft"]
+              ) &&
+              compareDistance(
+                scrollTop,
+                operator,
+                onScrollCallBackTrack[key]["scrollTop"]
+              )
             ) {
               onScrollCallBackTrack[key]["cb"]();
               if (/once/.test(key)) {
                 delete onScrollCallBackTrack[key];
+              }
+            } else {
+              if (cb2) {
+                cb2();
               }
             }
           }
