@@ -39,6 +39,7 @@ CDiscuzQ.user.authentication().then((userInfo) => {
   Vue.prototype.$state.user = userInfo;
 });
 
+
 new Vue({
   router,
   render: (h) => h(App),

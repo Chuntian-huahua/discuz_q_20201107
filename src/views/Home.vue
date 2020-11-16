@@ -7,6 +7,19 @@
     <a-collapse accordion style="margin:10px 0;">
       <a-collapse-panel key="1" header="更新记录">
         <ul class=updated-log>
+          <li>
+            2020-11-16
+            <ol>
+              <li>增加滚动到一定距离显示视频小弹窗</li>
+            </ol>
+          </li>
+          <li>
+            2020-11-15
+            <ol>
+              <li>增加主题的点赞功能</li>
+              <li>增加主题的收藏功能</li>
+            </ol>
+          </li>
            <li>
             2020-11-14
             <ol>
