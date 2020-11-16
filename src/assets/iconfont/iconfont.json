@@ -6,6 +6,13 @@
   "description": "DiscuzQ视频站模板",
   "glyphs": [
     {
+      "icon_id": "8117069",
+      "name": "pause",
+      "font_class": "pause",
+      "unicode": "e65d",
+      "unicode_decimal": 58973
+    },
+    {
       "icon_id": "158968",
       "name": "repair",
       "font_class": "repair",
@@ -74,13 +81,6 @@
       "font_class": "shouye-chaofenbianshuai",
       "unicode": "e615",
       "unicode_decimal": 58901
-    },
-    {
-      "icon_id": "11362235",
-      "name": "暂停",
-      "font_class": "zanting",
-      "unicode": "e666",
-      "unicode_decimal": 58982
     },
     {
       "icon_id": "212328",
