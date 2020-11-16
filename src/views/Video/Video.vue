@@ -1,7 +1,7 @@
 <template>
   <div class="video-page">
     <a-row type="flex" justify="space-between" v-if="pageLoaded">
-      <a-col :span="18">
+      <a-col ref="videoPageLeft" :span="18">
         <div class="left-col">
           <a-alert
             message="当前视频审核中"
@@ -10,23 +10,78 @@
             banner
             v-if="thread.isApproved==0"
           ></a-alert>
-          <video-player
-            class="thread-video"
-            :fileid="thread['thread-video']['file_id']"
-            :appid="appId"
-            v-if="thread.isApproved&&thread['thread-video']['file_id']"
-          ></video-player>
+          <div class="thread-video-wrapper">
+            <c-v-movable
+              :position="videoFixed?'fixed':'static'"
+              width="auto"
+              :height="videoFixed?'240px':'488px'"
+              :z-index="9999"
+              top="300px"
+              :left="videoFixedLeft"
+              :disabled="!videoFixed"
+            >
+              <video-player
+                class="thread-video"
+                :style="{ width:videoFixed?'430px':'100%',height:videoFixed?'240px':'100%' }"
+                :fileid="thread['thread-video']['file_id']"
+                :appid="appId"
+                :controls="!videoFixed"
+                :controlBar="{progressControl:true}"
+                :bigPlayButton="!videoFixed"
+                :play="videoPlay"
+                :pause="!videoPlay"
+                @pause="videoPlay=false"
+                @play="videoPlay=true"
+                v-if="thread.isApproved&&thread['thread-video']['file_id']"
+              >
+                <div v-show="videoFixed">
+                  <div
+                    class="thread-video-mini-operate"
+                    @mousemove.stop
+                    @click="videoPlay=true"
+                    v-show="videoPlay===false"
+                  >
+                    <c-icon
+                      class="thread-video-mini-operate-item"
+                      value="icon-playfill"
+                      size="30px"
+                      radius="50%"
+                    ></c-icon>
+                  </div>
+                  <div
+                    class="thread-video-mini-operate"
+                    @mousemove.stop
+                    @click="videoPlay=false"
+                    v-show="videoPlay"
+                  >
+                    <c-icon
+                      class="thread-video-mini-operate-item"
+                      value="icon-pause"
+                      size="30px"
+                      radius="50%"
+                    ></c-icon>
+                  </div>
+                  <div class="thread-video-mini-mask"></div>
+                </div>
+              </video-player>
+            </c-v-movable>
+          </div>
+
           <div class="video-info">
             <h2 class="thread-title ellipsis1">{{ thread.posts.content }}</h2>
             <div class="thread-details">
               <div>{{ thread.viewCount }}次播放 | 发布时间：{{ thread.createdAt }}</div>
               <ul class="thread-operate">
-                <li class="thread-operate-item">
-                  <c-icon value="icon-appreciate" size="22px"></c-icon>
+                <li class="thread-operate-item" @click="likeThread">
+                  <c-icon
+                    :value="thread.posts.isLiked?'icon-appreciatefill':'icon-appreciate'"
+                    size="22px"
+                  ></c-icon>
                   {{ thread.posts.likeCount }}
                 </li>
-                <li class="thread-operate-item">
-                  <c-icon value="icon-favor" size="22px"></c-icon>收藏
+                <li class="thread-operate-item" @click="favoriteThread">
+                  <c-icon :value="thread.isFavorite?'icon-favorfill':'icon-favor'" size="22px"></c-icon>
+                  {{ thread.isFavorite?'已收藏':'收藏' }}
                 </li>
                 <li class="thread-operate-item">
                   <c-icon value="icon-forward" size="22px"></c-icon>分享
@@ -117,6 +172,7 @@ import LFVideoItem from "@/components/LFVideoItem";
 import CommentInput from "@/components/CommentInput";
 import PostItem from "@/components/PostItem";
 import VideoPlayer from "@/components/VideoPlayer";
+import CVMovable from "@/components/CVMovable";
 import CTools from "../../function/c_tools";
 import serializer from "../../function/CDiscuzQ/serializer";
 import Config from "../../config";
@@ -133,6 +189,9 @@ export default {
       posts: [],
       appId: Config.TovAppId,
       sendLoading: false,
+      videoFixedLeft: "200px",
+      videoPlay: false,
+      videoFixed: false,
     };
   },
   created() {
@@ -142,6 +201,31 @@ export default {
     this.getThreads();
     this.getRelatedThreads();
     this.getThreadPosts();
+    CTools.onScroll(
+      () => {
+        let el = this.$refs["videoPageLeft"]["$el"];
+        this.videoFixedLeft =
+          el["scrollWidth"] + el["offsetLeft"] - 426 - 30 + "px";
+      },
+      window.innerHeight * 0.1,
+      null,
+      true
+    );
+    CTools.onScroll(
+      () => {
+        this.videoFixed = true;
+        // let el = this.$refs["videoPageLeft"]["$el"];
+        // this.videoFixedLeft =
+        //   el["scrollWidth"] + el["offsetLeft"] - 426 - 30 + "px";
+      },
+      window.innerHeight,
+      null,
+      false,
+      null,
+      () => {
+        this.videoFixed = false;
+      }
+    );
   },
   methods: {
     getThreads() {
@@ -242,6 +326,29 @@ export default {
           this.sendLoading = false;
         });
     },
+    likeThread() {
+      this.$dzq.request
+        .patchData("/posts/" + this.thread.posts._source.id, {
+          isLiked: !this.thread.posts.isLiked,
+        })
+        .then((res) => {
+          if (this.thread.posts.isLiked) {
+            this.thread.posts.likeCount--;
+          } else {
+            this.thread.posts.likeCount++;
+          }
+          this.thread.posts.isLiked = !this.thread.posts.isLiked;
+        });
+    },
+    favoriteThread() {
+      this.$dzq.request
+        .patchData("/threads/" + this.thread._source.id, {
+          isFavorite: true,
+        })
+        .then((res) => {
+          this.thread.isFavorite = !this.thread.isFavorite;
+        });
+    },
   },
   watch: {
     "$route.params.thread_id"() {
@@ -258,6 +365,7 @@ export default {
     CommentInput,
     PostItem,
     VideoPlayer,
+    CVMovable,
     ASwitch: Switch,
     ADropdown: Dropdown,
     AInput: Input,
@@ -271,21 +379,72 @@ export default {
   margin: 40px auto;
   width: var(--main-width);
 }
+
 .left-col {
   margin-right: 32px;
 }
+
+.thread-video-wrapper {
+  height: 100%;
+  height: 488px;
+  background: black;
+  border-radius:5px;
+  overflow: hidden;
+}
 .thread-video {
   width: 100%;
-  height: 488.25px;
 }
+.thread-video-mini {
+  width: 100%;
+  height: 100%;
+}
+.thread-video-mini-operate {
+  position: absolute;
+  z-index: 12;
+  bottom: 10px;
+  right: 10px;
+}
+.thread-video-mini-operate-item {
+  display: block;
+  padding: 5px 15px;
+  color: white;
+  cursor: pointer;
+  background: rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+}
+.thread-video-mini-mask {
+  position: absolute;
+  z-index: 11;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+}
+
+/* 悬浮视频 */
+.pip-player {
+  position: fixed;
+  z-index: 10;
+  top: 300px;
+  left: 60%;
+  width: 426px;
+  height: 240px;
+  background: white;
+  box-shadow: var(--box-shadow-base);
+  cursor: move;
+}
+
 .video-info {
   margin-top: 18px;
 }
+
 .thread-title {
   font-size: 22px;
   max-height: 60px;
   line-height: 30px;
 }
+
 .thread-details {
   display: flex;
   justify-content: space-between;
@@ -294,9 +453,12 @@ export default {
   margin-top: 15px;
   color: #666;
 }
+
 .thread-operate {
   display: flex;
+  user-select: none;
 }
+
 .thread-operate-item {
   display: flex;
   align-items: center;
@@ -305,38 +467,46 @@ export default {
   color: #000;
   cursor: pointer;
 }
+
 .thread-operate-item:hover {
   color: var(--primary-color);
 }
+
 .thread-operate-item .c-icon {
   margin-right: 3px;
   font-size: 22px;
 }
+
 .thread-author {
   display: flex;
   align-items: center;
   padding: 24px 0;
   border-bottom: 1px solid #ebebeb;
 }
+
 .author-avatar {
   flex-shrink: 0;
   width: 54px;
   height: 54px;
   border-radius: 50%;
 }
+
 .thread-author-info {
   flex-grow: 1;
   margin: 0 20px 0 12px;
 }
+
 .thread-author-username a {
   color: #000;
   font-size: 18px;
   font-weight: bold;
 }
+
 .thread-author-detail {
   font-size: 16px;
   color: #666;
 }
+
 .thread-author-follow {
   display: flex;
   align-items: center;
@@ -348,25 +518,30 @@ export default {
   margin-top: 20px;
   padding-left: 15px;
 }
+
 .thread-posts-publish {
   display: flex;
   justify-content: space-between;
 }
+
 .thread-posts-title {
   margin-bottom: 18px;
   font-size: 20px;
   font-weight: 400;
   color: #000;
 }
+
 .thread-posts-title .c-icon {
   margin-right: 5px;
 }
+
 .thread-posts-publish-author-avatar {
   margin-right: 23px;
   width: 34px;
   height: 34px;
   border-radius: 50%;
 }
+
 .thread-posts-publish-main {
   flex-grow: 1;
 }
